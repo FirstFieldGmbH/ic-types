@@ -65,11 +65,7 @@ impl std::fmt::Debug for Label {
 #[cfg(feature = "serde")]
 impl serde::Serialize for Label {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        if serializer.is_human_readable() {
-            format!("{:?}", self).serialize(serializer)
-        } else {
-            serializer.serialize_bytes(self.0.as_ref())
-        }
+        serializer.serialize_bytes(self.0.as_ref())
     }
 }
 
@@ -509,9 +505,10 @@ impl<'de, 'tree: 'de> serde::Deserialize<'de> for HashTreeNode<'tree> {
                         Ok(HashTreeNode::Fork(Box::new((left, right))))
                     }
                     2 => {
-                        let label: Label = seq
+                        let label: serde_bytes::ByteBuf = seq
                             .next_element()?
                             .ok_or_else(|| de::Error::invalid_length(1, &self))?;
+                        let label = Label::from(label);
                         let subtree: HashTreeNode = seq
                             .next_element()?
                             .ok_or_else(|| de::Error::invalid_length(2, &self))?;
